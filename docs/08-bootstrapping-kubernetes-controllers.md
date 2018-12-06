@@ -337,8 +337,8 @@ EOF
 
 ## Kubernetes user cluster role binding
 
-The section will bind user kubernetes to a suitable Cluster Role so that the user has sufficient privilege to allow use of exec and logs
-kubectl commands
+The section will bind user `kubernetes` to a suitable Cluster Role so that the Admin user has sufficient 
+privilege to allow use of `exec` and `logs` kubectl commands
 
 ```
 kubectl create clusterrolebinding apiserver-kubelet-admin --user=kubernetes --clusterrole=system:kubelet-api-admin
