@@ -6,6 +6,8 @@ In this lab you will create a route for each worker node that maps the node's Po
 
 > There are [other ways](https://kubernetes.io/docs/concepts/cluster-administration/networking/#how-to-achieve-this) to implement the Kubernetes networking model.
 
+Be aware that if you decide to use Weave these routes are not required
+
 ## The Routing Table
 
 In this section you will gather the information required to create routes in the `kubernetes-the-hard-way` VPC network.

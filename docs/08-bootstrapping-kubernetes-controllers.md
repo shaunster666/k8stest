@@ -335,6 +335,16 @@ subjects:
 EOF
 ```
 
+## Kubernetes user cluster role binding
+
+The section will binf user kubernetes to a suitable Cluster Role so that the user has sufficient privilege to allow use of exec and logs
+kubectl commands
+
+```
+kubectl create clusterrolebinding apiserver-kubelet-admin --user=kubernetes --clusterrole=system:kubelet-api-admin
+```
+
+
 ## The Kubernetes Frontend Load Balancer
 
 In this section you will provision an external load balancer to front the Kubernetes API Servers. The `kubernetes-the-hard-way` static IP address will be attached to the resulting load balancer.
