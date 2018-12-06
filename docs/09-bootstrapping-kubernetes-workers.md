@@ -66,7 +66,6 @@ Install the worker binaries:
   sudo tar -xvf containerd-1.2.0-rc.0.linux-amd64.tar.gz -C /
 }
 ```
-
 ### Configure CNI Networking
 
 Retrieve the Pod CIDR range for the current compute instance:
