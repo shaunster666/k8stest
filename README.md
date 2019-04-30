@@ -1,42 +1,97 @@
-# Kubernetes The Hard Way
+# cloudformation-portal-core
 
-This tutorial walks you through setting up Kubernetes the hard way. This guide is not for people looking for a fully automated command to bring up a Kubernetes cluster. If that's you then check out [Google Kubernetes Engine](https://cloud.google.com/kubernetes-engine), or the [Getting Started Guides](http://kubernetes.io/docs/getting-started-guides/).
+Templates for Jungo's Portal Project
 
-Kubernetes The Hard Way is optimized for learning, which means taking the long route to ensure you understand each task required to bootstrap a Kubernetes cluster.
+## Contents
 
-> The results of this tutorial should not be viewed as production ready, and may receive limited support from the community, but don't let that stop you from learning!
+The templates and scripts in this repository create Jungo's Portal application.
 
-## Target Audience
+The top level directory contains a number of scripts used by cftool to create the various services and infrastructure used by Portal.  
 
-The target audience for this tutorial is someone planning to support a production Kubernetes cluster and wants to understand how everything fits together.
+* codebuild/ - Contains the spec file used by cftool to validate and build the required stacks.
+* codepipeline/ - Contains a script and the stacks required to build an AWS CodeBuild Project and CodePipeline. The latter actually creates the stacks using the ChangeSet and Execute ChangeSet stack procedures.
+* shared - Cloudformation templates for the creation of the infrastructure and services. 
 
-## Cluster Details
+## Operational Overview
 
-Kubernetes The Hard Way guides you through bootstrapping a highly available Kubernetes cluster with end-to-end encryption between components and RBAC authentication.
+Most of the stacks in the Portal application are created by CodePipeline using cftool. CodePipeline executes cftool via a special ECS container called shared-code-build. This container is created earlier on by the stackset shared-codepipeline-base. All the actions performed by cftool are defined in codebuild/buildspec.yml.
 
-* [Kubernetes](https://github.com/kubernetes/kubernetes) 1.12.0
-* [containerd Container Runtime](https://github.com/containerd/containerd) 1.2.0-rc.0
-* [gVisor](https://github.com/google/gvisor) 50c283b9f56bb7200938d9e207355f05f79f0d17
-* [CNI Container Networking](https://github.com/containernetworking/cni) 0.6.0
-* [etcd](https://github.com/coreos/etcd) v3.3.9
-* [CoreDNS](https://github.com/coredns/coredns) v1.2.2
+This file defines which cf files should be used to build the stacks. Temporary credentials are acquired using the aws sts command so that that the configuration repository can be cloned. The files are then validated using jsonlint. cftool then compiles, or expands, the .cf files into complete CloudFormation stacks, known as artifacts,  which in turn are validated using ``aws cloudformation validate-template``
 
-## Labs
+If all these processes complete successfully CodePipeline creates a Stack ChangeSet then executes the ChangeSet to create the required stack in the environment's account.  
 
-This tutorial assumes you have access to the [Google Cloud Platform](https://cloud.google.com). While GCP is used for basic infrastructure requirements the lessons learned in this tutorial can be applied to other platforms.
+## Prerequisites
 
-* [Prerequisites](docs/01-prerequisites.md)
-* [Installing the Client Tools](docs/02-client-tools.md)
-* [Provisioning Compute Resources](docs/03-compute-resources.md)
-* [Provisioning the CA and Generating TLS Certificates](docs/04-certificate-authority.md)
-* [Generating Kubernetes Configuration Files for Authentication](docs/05-kubernetes-configuration-files.md)
-* [Generating the Data Encryption Config and Key](docs/06-data-encryption-keys.md)
-* [Bootstrapping the etcd Cluster](docs/07-bootstrapping-etcd.md)
-* [Bootstrapping the Kubernetes Control Plane](docs/08-bootstrapping-kubernetes-controllers.md)
-* [Bootstrapping the Kubernetes Worker Nodes](docs/09-bootstrapping-kubernetes-workers.md)
-* [Configuring kubectl for Remote Access](docs/10-configuring-kubectl.md)
-* [Provisioning Pod Network Routes](docs/11-pod-network-routes.md)
-* [Deploying the DNS Cluster Add-on](docs/12-dns-addon.md)
-* [Smoke Test](docs/13-smoke-test.md)
-* [Cleaning Up](docs/14-cleanup.md)
-# k8stest
+Before attempting to create any of these stacks the stacks and stacksets from the jungo-core-cloudformation repository must be created first:
+
+* Access9apps
+* generic-base
+* StackSet-generic-roles-and-policies
+* StackSet-generic-alarmtopics
+* StackSet-generic-cloudtrail
+* StackSet-shared-vpc
+* StackSet-shared-bastion
+* portal-codepipeline-cross-account-role
+* StackSet-shared-codepipeline-base
+
+Both AWS environments must have read only access to Jungo's GitHub repository (PoweredByTheCrowd). All the environment variables listed in Appendix A must be available in the AWS Secrets Manager.
+
+Make a clone of this repository to your Mac:
+```
+git clone https://git-codecommit.eu-west-1.amazonaws.com/v1/repos/jungo-portal-cloudformation
+```
+
+## Usage
+
+When the above stacks and stacksets have been completed, the Development environment may be created thus:
+
+
+```
+export AWS_PROFILE=jungo-dev
+cd codepipeline
+./create-or-update-stack.sh portal-cf-codepipeline-dev create
+```
+
+Create a database for Development called ``portal`` in the Dev RDS instance using the database username and password defined in the Secrets Manager of the jungo-dev account.
+
+The Production environment is created after the Development subject to the prequisites specified above:
+
+```
+export AWS_PROFILE=jungo-prd
+cd codepipeline
+./create-or-update-stack.sh portal-ecr create
+./create-or-update-stack.sh portal-cf-codepipeline-prd create
+```
+
+Create a database for Production called ``portal`` in the Prd RDS instance using the database username and password defined in the Secrets Manager of the jungo-prd account.
+
+### Appendix A
+
+API_DOMAIN
+APP_ENV
+ASPNETCORE_ENVIRONMENT
+BASIC_AUTH_PASS
+CANOPY_INTEREST_RATE
+COOKIE_DOMAIN
+COOKIE_SECRET
+DOMAIN
+FUNDATION_URL
+HOST
+INTERCOM_KEY
+INTERCOM_TOKEN
+INVESTMENT_MINUTES_TO_EXPIRE
+JUNGO_DB_PASS
+JUNGO_DB_NAME
+JUNGO_DB_UNAME
+LOG_LEVEL
+MANDRILL_KEY
+MOLLIE_KEY
+NODE_ENV
+POSTCODEAPI_KEY
+POSTCODEAPI_SECRET
+TOPICUS_REMOTE_ADDRESS
+TOPICUS_AUTH_TOKEN
+
+
+
+
